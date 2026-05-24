@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Local uploads & database (Supabase handles storage now)
+server/uploads/*
+!server/uploads/.gitkeep
+server/data/
+
+# Environment variables — never commit secrets
+.env
+.env.local
+.env.production
+.env.development
+.env.example
+
+# Debug & test scripts
+test-supabase.js
+test-api.js
+test-db.js
+*.log
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
