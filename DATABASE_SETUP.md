@@ -15,6 +15,8 @@ Copy `.env.example` to `.env` if needed. Keep the existing `DATABASE_URL` value;
 
 Never expose database or object-storage credentials through `NEXT_PUBLIC_*` variables or commit `.env`.
 
+Vercel does not upload the local `.env` file. Add `DATABASE_URL`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, and the required S3 settings in the Vercel project's Environment Variables for each deployment environment.
+
 ## Initialize PostgreSQL
 
 Run these commands after setting `DATABASE_URL`:

@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma'
+import { getPrismaClient } from '@/lib/prisma'
 import { deleteObject } from '@/lib/objectStorage'
 
 export type NewFileRecord = {
@@ -14,7 +14,7 @@ export type NewFileRecord = {
 }
 
 export async function getFile(id: string) {
-  const file = await prisma.fileShare.findUnique({ where: { id } })
+  const file = await getPrismaClient().fileShare.findUnique({ where: { id } })
   if (!file) return null
 
   return {
@@ -33,7 +33,7 @@ export async function getFile(id: string) {
 }
 
 export async function addFile(id: string, record: NewFileRecord) {
-  await prisma.fileShare.create({
+  await getPrismaClient().fileShare.create({
     data: {
       id,
       userId: record.userId,
@@ -54,7 +54,7 @@ export async function removeFile(id: string) {
   if (!record) return
 
   await deleteObject(record.storedName)
-  await prisma.fileShare.deleteMany({ where: { id } })
+  await getPrismaClient().fileShare.deleteMany({ where: { id } })
 }
 
 export async function updateFileAttempts(
@@ -62,7 +62,7 @@ export async function updateFileAttempts(
   attempts: number,
   lockedAt: number | null,
 ) {
-  await prisma.fileShare.update({
+  await getPrismaClient().fileShare.update({
     where: { id },
     data: {
       attempts,
@@ -83,7 +83,7 @@ export async function checkAndRemoveIfExpired(id: string) {
 
 export async function deleteExpiredFiles() {
   const now = new Date()
-  const expired = await prisma.fileShare.findMany({
+  const expired = await getPrismaClient().fileShare.findMany({
     where: { expiresAt: { lte: now } },
     select: { id: true, storedName: true },
   })
@@ -93,7 +93,7 @@ export async function deleteExpiredFiles() {
   }
 
   if (expired.length > 0) {
-    await prisma.fileShare.deleteMany({
+    await getPrismaClient().fileShare.deleteMany({
       where: { id: { in: expired.map((file) => file.id) } },
     })
   }

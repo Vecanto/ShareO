@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs'
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { getPrismaClient } from '@/lib/prisma'
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const BCRYPT_MAX_BYTES = 72
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
 
   const passwordHash = await bcrypt.hash(password, 12)
   try {
-    await prisma.user.create({
+    await getPrismaClient().user.create({
       data: { email: normalizedEmail, passwordHash },
       select: { id: true },
     })

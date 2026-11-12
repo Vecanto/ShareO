@@ -3,7 +3,7 @@ import DashboardClient from './DashboardClient'
 import { decryptPasswordSync } from '@/lib/hash'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/authOptions'
-import { prisma } from '@/lib/prisma'
+import { getPrismaClient } from '@/lib/prisma'
 import Link from 'next/link'
 import SignOutButton from '@/components/SignOutButton'
 
@@ -17,7 +17,7 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  const files = await prisma.fileShare.findMany({
+  const files = await getPrismaClient().fileShare.findMany({
     where: { userId: session.user.id },
     orderBy: { createdAt: 'desc' },
   })
