@@ -51,21 +51,27 @@ export default function Connect() {
           <div className="cn-links">
             <a href="mailto:scalpxnaved@gmail.com" className="cn-link-item">
               <span className="cn-link-label">Email</span>
-              <span className="cn-link-arrow">↗</span>
+              <svg className="cn-link-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M4 12 12 4M5 4h7v7" />
+              </svg>
             </a>
             <a href="https://github.com/Vecanto" target="_blank" rel="noopener noreferrer" className="cn-link-item">
               <span className="cn-link-label">GitHub</span>
-              <span className="cn-link-arrow">↗</span>
+              <svg className="cn-link-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M4 12 12 4M5 4h7v7" />
+              </svg>
             </a>
             <button onClick={openModal} className="cn-link-item">
               <span className="cn-link-label">Send a message</span>
-              <span className="cn-link-arrow">↗</span>
+              <svg className="cn-link-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M4 8h8M8 4l4 4-4 4" />
+              </svg>
             </button>
           </div>
 
           <div className="cn-footer">
-            <span className="cn-footer-note">End-to-end encrypted transfers</span>
-            <Link href="/" className="cn-footer-link">← Back to home</Link>
+            <span className="cn-footer-note">Files expire after 24 hours</span>
+            <Link href="/" className="cn-footer-link">Back to home</Link>
           </div>
         </div>
       </div>
@@ -79,11 +85,15 @@ export default function Connect() {
         aria-label="Send a message"
       >
         <div className="cn-modal">
-          <button className="cn-modal-close" onClick={closeModal} aria-label="Close modal">×</button>
+          <button className="cn-modal-close" onClick={closeModal} aria-label="Close modal">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="m5 5 10 10M15 5 5 15" />
+            </svg>
+          </button>
           <h2>Send a message</h2>
 
           {submitted ? (
-            <p className="cn-success-msg">✓ Message sent. We will get back to you soon.</p>
+            <p className="cn-success-msg">Message sent. We will get back to you soon.</p>
           ) : (
             <form className="cn-form" onSubmit={handleSubmit} noValidate>
               <div className="cn-form-group">

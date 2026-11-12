@@ -29,69 +29,67 @@ export default function DashboardClient({ files }: { files: FileData[] }) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <div className="file-register">
       {files.map((file) => (
-        <div 
-          key={file.id} 
-          style={{ 
-            padding: '20px', 
-            border: '1px solid var(--border)', 
-            borderRadius: 'var(--radius)', 
-            background: 'var(--bg-2)',
-            opacity: file.isExpired ? 0.6 : 1
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-            <div>
-              <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '4px', wordBreak: 'break-all' }}>
-                📄 {file.originalName}
-              </h3>
-              <p style={{ fontSize: '12px', color: 'var(--text-3)' }}>
-                {file.isExpired 
-                  ? <span style={{ color: 'var(--error)' }}>Expired on {new Date(file.expiresAt).toLocaleString()}</span>
-                  : <span>Valid until {new Date(file.expiresAt).toLocaleString()}</span>
-                }
-              </p>
+        <article className={`file-record ${file.isExpired ? 'file-record-expired' : ''}`} key={file.id}>
+          <div className="file-record-main">
+            <div className="file-record-title">
+              <span className="file-record-index" aria-hidden="true">FILE</span>
+              <h2>{file.originalName}</h2>
             </div>
-            
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div className="file-record-actions">
               {!file.isExpired && (
                 <>
-                  <Link 
-                    href={`/download/${file.id}`} 
+                  <Link
+                    href={`/download/${file.id}`}
                     target="_blank"
-                    style={{ fontSize: '12px', padding: '6px 12px', border: '1px solid var(--border-2)', borderRadius: '4px', color: 'var(--text-2)' }}
+                    rel="noreferrer"
+                    className="record-action"
                   >
                     Open
                   </Link>
-                  <button 
+                  <button
                     onClick={() => handleCopyLink(file.id)}
-                    style={{ fontSize: '12px', padding: '6px 12px', background: 'var(--border-2)', borderRadius: '4px', color: 'var(--text)' }}
+                    className="record-action record-action-primary"
+                    type="button"
                   >
-                    {copiedLink === file.id ? 'Copied!' : 'Copy Link'}
+                    {copiedLink === file.id ? 'Copied' : 'Copy link'}
                   </button>
                 </>
               )}
             </div>
           </div>
 
+          <dl className="file-record-details">
+            <div>
+              <dt>Expires</dt>
+              <dd className={file.isExpired ? 'record-expired' : ''}>
+                {new Date(file.expiresAt).toLocaleString()}
+              </dd>
+            </div>
+            <div>
+              <dt>Protection</dt>
+              <dd>{file.password ? 'Password protected' : 'No password'}</dd>
+            </div>
+          </dl>
+
           {file.password && (
-            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '12px', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Password:</span>
-              <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg)', padding: '6px 12px', borderRadius: '4px', border: '1px solid var(--border)' }}>
-                <span style={{ fontSize: '13px', fontFamily: 'monospace', minWidth: '80px', letterSpacing: visiblePasswords[file.id] ? 'normal' : '0.2em' }}>
+            <div className="password-record">
+              <span className="password-record-label">Password</span>
+              <span className={`password-value ${visiblePasswords[file.id] ? 'password-value-visible' : ''}`}>
                   {visiblePasswords[file.id] ? file.password : '••••••••'}
-                </span>
-              </div>
-              <button 
+              </span>
+              <button
                 onClick={() => togglePassword(file.id)}
-                style={{ fontSize: '12px', color: 'var(--blue-text)' }}
+                className="password-toggle"
+                type="button"
+                aria-pressed={Boolean(visiblePasswords[file.id])}
               >
-                {visiblePasswords[file.id] ? 'Hide' : 'View'}
+                {visiblePasswords[file.id] ? 'Hide' : 'Reveal'}
               </button>
             </div>
           )}
-        </div>
+        </article>
       ))}
     </div>
   )

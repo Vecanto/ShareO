@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useRef, useCallback } from 'react'
 
 const MAX_FILE_SIZE_MB = 100
@@ -108,75 +109,144 @@ export default function TransferZone() {
   }
 
   return (
-    <section className="transfer-zone">
-      <h1 className="transfer-zone-heading">Transfer a file</h1>
-      <p className="transfer-zone-sub">No sign-up. Files expire in 24 hours. Up to {MAX_FILE_SIZE_MB}MB.</p>
+    <main className="transfer-shell">
+      <section className="hero-copy">
+        <h1>Send a file.<br />Pass the link on.</h1>
+        <p>
+          Choose a file, add a password if you like, and share its link. Each transfer
+          expires after 24 hours.
+        </p>
 
-      <div
-        className={`drop-area ${dragOver ? 'dragover' : ''}`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={() => inputRef.current?.click()}
-        role="button"
-        tabIndex={0}
-        aria-label="File drop zone, click or drag a file here"
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click() }}
-      >
-        {file ? (
-          <>
-            <p className="file-name">📄 {file.name}</p>
-            <p className="file-size">{formatSize(file.size)}</p>
-          </>
-        ) : (
-          <>
-            <div className="drop-icon">⬆</div>
-            <p>Drag &amp; drop a file here, or click to select</p>
-          </>
+        <div className="hero-actions">
+          <a href="#transfer" className="primary-cta">
+            Start a handoff
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M3 8h10M8 3l5 5-5 5" />
+            </svg>
+          </a>
+          <Link href="/about" className="secondary-cta">How it works</Link>
+        </div>
+
+        <dl className="handoff-facts">
+          <div>
+            <dt>File limit</dt>
+            <dd>100 MB</dd>
+          </div>
+          <div>
+            <dt>Link lifetime</dt>
+            <dd>24 hours</dd>
+          </div>
+          <div>
+            <dt>Protection</dt>
+            <dd>Optional password</dd>
+          </div>
+        </dl>
+
+        <div className="account-route">
+          <span>Keeping track of your transfers?</span>
+          <Link href="/login">Open your file register</Link>
+        </div>
+      </section>
+
+      <section className="transfer-zone" id="transfer">
+        <div className="transfer-zone-header">
+          <div>
+            <h2 className="transfer-zone-heading">Create a handoff</h2>
+            <p className="transfer-zone-sub">Choose a file to begin.</p>
+          </div>
+          <span className="due-stamp">Expires in 24 hours</span>
+        </div>
+
+        <div
+          className={`drop-area ${dragOver ? 'dragover' : ''}`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() => inputRef.current?.click()}
+          role="button"
+          tabIndex={0}
+          aria-label="File drop zone, click or drag a file here"
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click() }}
+        >
+          {file ? (
+            <div className="selected-file">
+              <svg className="file-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7 3.75h6.2L18 8.6v11.65H7a2 2 0 0 1-2-2v-12.5a2 2 0 0 1 2-2Z" />
+                <path d="M13 4v5h5M8.5 13h6M8.5 16h6" />
+              </svg>
+              <span className="file-summary">
+                <span className="file-name">{file.name}</span>
+                <span className="file-size">{formatSize(file.size)}</span>
+              </span>
+              <span className="file-change">Replace</span>
+            </div>
+          ) : (
+            <div className="drop-prompt">
+              <svg className="drop-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                <path d="M16 21V5m0 0-6 6m6-6 6 6M6 20v6h20v-6" />
+              </svg>
+              <p className="drop-title">Drop a file to begin</p>
+              <p className="drop-hint">or browse from your device</p>
+            </div>
+          )}
+          <input
+            ref={inputRef}
+            type="file"
+            className="file-input"
+            onChange={handleFileChange}
+            aria-hidden="true"
+            tabIndex={-1}
+          />
+        </div>
+
+        <div className="password-field">
+          <label htmlFor="upload-password">
+            <span>Password protection</span>
+            <span className="optional-label">Optional</span>
+          </label>
+          <input
+            id="upload-password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Leave blank for no password"
+            disabled={uploading}
+            autoComplete="new-password"
+          />
+        </div>
+
+        <button className="upload-btn" onClick={handleUpload} disabled={uploading || !file} type="button">
+          {uploading ? `Uploading ${progress}%` : 'Upload & create link'}
+        </button>
+
+        {uploading && (
+          <div className="progress-bar" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
+            <div className="progress-fill" style={{ transform: `scaleX(${progress / 100})` }} />
+          </div>
         )}
-        <input ref={inputRef} type="file" className="file-input" onChange={handleFileChange} aria-hidden="true" />
-      </div>
 
-      <div className="password-field">
-        <label htmlFor="upload-password">Password protection (optional)</label>
-        <input
-          id="upload-password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Leave blank for no password"
-          disabled={uploading}
-          autoComplete="new-password"
-        />
-      </div>
+        {error && <p className="error-text" role="alert">{error}</p>}
 
-      <button className="upload-btn" onClick={handleUpload} disabled={uploading || !file}>
-        {uploading ? `Uploading… ${progress}%` : 'Upload & get link'}
-      </button>
-
-      {uploading && (
-        <div className="progress-bar" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
-          <div className="progress-fill" style={{ width: `${progress}%` }} />
-        </div>
-      )}
-
-      {error && <p className="error-text" role="alert">{error}</p>}
-
-      {result && (
-        <div className="result-box">
-          <div className="link-row">
-            <input type="text" readOnly value={result.link} aria-label="Shareable file link" />
-            <button className={`copy-btn ${copied ? 'copied' : ''}`} onClick={handleCopy}>
-              {copied ? '✓ Copied' : 'Copy link'}
-            </button>
+        {result && (
+          <div className="result-box" aria-live="polite">
+            <div className="result-heading">
+              <h3>Link ready to share</h3>
+              <span className="due-stamp due-stamp-ready">Ready</span>
+            </div>
+            <div className="link-row">
+              <input type="text" readOnly value={result.link} aria-label="Shareable file link" />
+              <button className={`copy-btn ${copied ? 'copied' : ''}`} onClick={handleCopy} type="button">
+                {copied ? 'Copied' : 'Copy link'}
+              </button>
+            </div>
+            <dl className="meta-row">
+              <div><dt>File</dt><dd>{result.originalName}</dd></div>
+              <div><dt>Size</dt><dd>{result.size}</dd></div>
+              <div><dt>Expires</dt><dd>{formatExpiry(result.expiresAt)}</dd></div>
+            </dl>
           </div>
-          <div className="meta-row">
-            <div>File: <span>{result.originalName}</span></div>
-            <div>Size: <span>{result.size}</span></div>
-            <div>Expires: <span>{formatExpiry(result.expiresAt)}</span></div>
-          </div>
-        </div>
-      )}
-    </section>
+        )}
+      </section>
+    </main>
   )
 }

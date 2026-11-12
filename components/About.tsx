@@ -2,51 +2,43 @@
 
 import Link from 'next/link'
 
+const sectionId = (title: string) => title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
 const sections = [
   {
     title: 'Introduction',
     content:
-      'ShareO is a dead-simple, no-signup file transfer tool. Upload any file up to 100MB, get a shareable link instantly, and send it to anyone. No accounts, no tracking, no clutter. Files expire automatically after 24 hours and are wiped from storage.',
+      'ShareO lets you send a file without creating an account. Choose a file up to 100 MB, optionally add a password, and share the link. Links expire after 24 hours.',
   },
   {
     title: 'How It Works',
     content:
-      'Drag a file into the drop zone (or click to browse), optionally add a password, and hit Upload. You get a unique link you can copy and share. The recipient opens the link, enters the password if required, and downloads the file directly. Everything happens in the browser.',
+      'Drag a file into the drop zone or browse from your device. Add a password if you want one, then upload to create a shareable link. The recipient opens that link and enters the password before downloading when protection is enabled.',
   },
   {
     title: 'Password Protection',
     content:
-      'You can optionally protect any upload with a password. Passwords are hashed with bcrypt (salt rounds 10) before storage. The recipient must enter the correct password to download. After 3 failed attempts, the file is locked for 30 minutes to prevent brute-force attacks.',
+      'You can add a password when uploading. Recipients must enter it before downloading a protected file. Repeated incorrect attempts temporarily lock access to the link.',
   },
   {
-    title: 'File Expiry & Cleanup',
+    title: 'File Expiry',
     content:
-      'Every uploaded file has a fixed lifespan of 24 hours from the moment it is uploaded. After expiry, the file is permanently deleted from both cloud storage and the database. A background cleanup job runs periodically to remove expired files automatically.',
-  },
-  {
-    title: 'Security',
-    content:
-      'ShareO blocks executable and script file uploads (.exe, .bat, .sh, .ps1, .py, .jar, and more). The API is rate-limited to 100 requests per 15 minutes and 20 uploads per hour per IP. Helmet security headers and CORS origin restrictions are enforced in production.',
+      'Each link has a 24-hour lifetime. After it expires, it can no longer be used to download the file.',
   },
   {
     title: 'Limits & Fair Use',
     content:
-      'Max file size: 100MB per upload. Max failed password attempts: 3 per file (then 30-minute lockout). Files live for 24 hours only. There is no user authentication — the service is open to anyone, so please do not use it for illegal or harmful content.',
+      'Each upload can be up to 100 MB. Files expire after 24 hours, and password protection is optional.',
   },
   {
-    title: 'Tech Stack',
+    title: 'Your File Register',
     content:
-      'Frontend: Next.js + React, vanilla CSS, hosted via Vercel. Backend: Next.js API Routes, bcrypt for password hashing, UUID v4 for link generation, better-sqlite3 for metadata, Supabase Storage for files.',
-  },
-  {
-    title: 'Privacy',
-    content:
-      'We do not track users, require logins, or store personal data. Only the file, its optional password hash, and an expiry timestamp are kept. Once a file expires or is deleted, all traces are removed. We cannot recover expired files.',
+      'The dashboard lists files uploaded while signed in. For active files, you can open or copy the share link and review the expiry and password status.',
   },
   {
     title: 'FAQ',
     content:
-      'Do I need an account? No. Can I recover an expired file? No. Can I change the expiry time? Not as a user — it is fixed at 24 hours. What happens if I forget the password? The file cannot be downloaded without it. Is there a download speed limit? No, downloads stream directly from cloud storage.',
+      'Do I need an account to send a file? No. Can I add a password? Yes, it is optional. How long does a link last? 24 hours. Can I use an expired link? No.',
   },
 ]
 
@@ -57,7 +49,7 @@ export default function About() {
         <div className="ab-logo">ShareO</div>
         <nav className="ab-nav" aria-label="Documentation sections">
           {sections.map((section) => (
-            <a key={section.title} href={`#${section.title.toLowerCase().replace(/ &amp; /g, '-').replace(/ /g, '-')}`}>
+            <a key={section.title} href={`#${sectionId(section.title)}`}>
               {section.title}
             </a>
           ))}
@@ -66,40 +58,28 @@ export default function About() {
 
       <main className="ab-content">
         <div className="ab-hero">
-          <span className="ab-badge">Documentation</span>
           <h1>ShareO Documentation</h1>
           <p>
-            Everything you need to know about ShareO — how to upload, share,
-            protect, and download files. No accounts. No tracking. Just links.
+            A quick guide to choosing a file, sharing its link, and knowing when it expires.
           </p>
         </div>
 
         <div className="ab-tagline">
-          ShareO is just getting started. You may run into a bug or two — if
-          you spot anything off, please report it on our{' '}
-          <Link href="/connect">Connect page</Link>. We read every message.
+          Need help with a handoff? Send a note through our{' '}
+          <Link href="/connect">Connect page</Link>.
         </div>
 
-        <div className="ab-cards">
-          <div className="ab-card">
-            <h3>No Signup</h3>
-            <p>Upload instantly without creating an account or verifying an email.</p>
-          </div>
-          <div className="ab-card">
-            <h3>Password Protected</h3>
-            <p>Optional bcrypt-hashed passwords with brute-force lockout protection.</p>
-          </div>
-          <div className="ab-card">
-            <h3>Auto Expiry</h3>
-            <p>Files live for 24 hours, then are permanently wiped from storage.</p>
-          </div>
-        </div>
+        <dl className="ab-facts">
+          <div><dt>File limit</dt><dd>100 MB per upload</dd></div>
+          <div><dt>Password</dt><dd>Optional on upload</dd></div>
+          <div><dt>Link lifetime</dt><dd>24 hours</dd></div>
+        </dl>
 
         {sections.map((section) => (
           <section
             className="ab-section"
             key={section.title}
-            id={section.title.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')}
+            id={sectionId(section.title)}
           >
             <h2>{section.title}</h2>
             <p>{section.content}</p>

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
 import path from 'path'
 import { v4 as uuidv4 } from 'uuid'
 import { hashPassword } from '@/lib/hash'
 import { addFile } from '@/lib/fileStore'
 import { getFileSizeString } from '@/lib/utils'
-import { createClient } from '@/utils/supabase/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/authOptions'
+import { deleteObject, StorageConfigurationError, uploadObject } from '@/lib/objectStorage'
 
 const MAX_FILE_SIZE_MB = parseInt(process.env.MAX_FILE_SIZE_MB || '100')
 const FILE_EXPIRY_HOURS = parseInt(process.env.FILE_EXPIRY_HOURS || '24')
@@ -19,14 +20,11 @@ const dangerousExts = [
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
-    const file = formData.get('file') as File
-    const password = (formData.get('password') as string) || ''
+    const file = formData.get('file')
+    const passwordValue = formData.get('password')
+    const password = typeof passwordValue === 'string' ? passwordValue : ''
 
-    const authClient = await createClient()
-    const { data: { user } } = await authClient.auth.getUser()
-    const user_id = user?.id || null
-
-    if (!file) {
+    if (!(file instanceof File)) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 })
     }
 
@@ -41,21 +39,7 @@ export async function POST(request: NextRequest) {
 
     const id = uuidv4()
     const storedName = uuidv4() + ext
-
-    const bytes = await file.arrayBuffer()
-
-    const { data: uploadData, error: uploadError } = await supabase
-      .storage
-      .from('uploads')
-      .upload(storedName, bytes, {
-        contentType: file.type,
-      })
-
-    if (uploadError) {
-      console.error('Supabase upload error:', uploadError)
-      return NextResponse.json({ error: 'Failed to upload to storage' }, { status: 500 })
-    }
-
+    const session = await getServerSession(authOptions)
     const now = Date.now()
     const expiresAt = now + FILE_EXPIRY_HOURS * 60 * 60 * 1000
 
@@ -64,15 +48,31 @@ export async function POST(request: NextRequest) {
       hash = await hashPassword(password.trim())
     }
 
-    await addFile(id, {
-      user_id,
-      originalName: file.name,
+    await uploadObject(
       storedName,
-      hash,
-      attempts: 0,
-      lockedAt: null,
-      expiresAt
-    })
+      new Uint8Array(await file.arrayBuffer()),
+      file.type || 'application/octet-stream',
+    )
+    try {
+      await addFile(id, {
+        userId: session?.user.id ?? null,
+        originalName: file.name,
+        storedName,
+        hash,
+        attempts: 0,
+        lockedAt: null,
+        expiresAt,
+        sizeBytes: file.size,
+        contentType: file.type || 'application/octet-stream',
+      })
+    } catch (error) {
+      try {
+        await deleteObject(storedName)
+      } catch (cleanupError) {
+        console.error('Failed to clean up an upload after its database insert failed:', cleanupError)
+      }
+      throw error
+    }
 
     const link = `${BASE_URL}/download/${id}`
 
@@ -84,6 +84,9 @@ export async function POST(request: NextRequest) {
       expiresAt
     })
   } catch (err) {
+    if (err instanceof StorageConfigurationError) {
+      return NextResponse.json({ error: err.message }, { status: 503 })
+    }
     console.error('Upload error:', err)
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
   }

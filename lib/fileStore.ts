@@ -1,66 +1,100 @@
-import { supabase } from '@/lib/supabase'
+import { prisma } from '@/lib/prisma'
+import { deleteObject } from '@/lib/objectStorage'
+
+export type NewFileRecord = {
+  userId: string | null
+  originalName: string
+  storedName: string
+  hash: string | null
+  attempts: number
+  lockedAt: number | null
+  expiresAt: number
+  sizeBytes: number
+  contentType: string
+}
 
 export async function getFile(id: string) {
-  const { data, error } = await supabase.from('files').select('*').eq('id', id).single()
-  if (error || !data) return null
+  const file = await prisma.fileShare.findUnique({ where: { id } })
+  if (!file) return null
+
   return {
-    id: data.id,
-    user_id: data.user_id,
-    originalName: data.original_name,
-    storedName: data.stored_name,
-    hash: data.password, 
-    attempts: data.attempts,
-    lockedAt: data.locked_at,
-    expiresAt: data.expires_at,
+    id: file.id,
+    userId: file.userId,
+    originalName: file.originalName,
+    storedName: file.storedName,
+    hash: file.password,
+    attempts: file.attempts,
+    lockedAt: file.lockedAt?.getTime() ?? null,
+    expiresAt: file.expiresAt.getTime(),
+    sizeBytes: file.sizeBytes,
+    contentType: file.contentType,
+    createdAt: file.createdAt.toISOString(),
   }
 }
 
-export async function addFile(id: string, record: any) {
-  await supabase.from('files').insert({
-    id,
-    user_id: record.user_id || null,
-    original_name: record.originalName,
-    stored_name: record.storedName,
-    password: record.hash || null,
-    attempts: record.attempts || 0,
-    locked_at: record.lockedAt || null,
-    expires_at: record.expiresAt,
+export async function addFile(id: string, record: NewFileRecord) {
+  await prisma.fileShare.create({
+    data: {
+      id,
+      userId: record.userId,
+      originalName: record.originalName,
+      storedName: record.storedName,
+      password: record.hash,
+      attempts: record.attempts,
+      lockedAt: record.lockedAt === null ? null : new Date(record.lockedAt),
+      expiresAt: new Date(record.expiresAt),
+      sizeBytes: record.sizeBytes,
+      contentType: record.contentType,
+    },
   })
 }
 
 export async function removeFile(id: string) {
   const record = await getFile(id)
-  if (record) {
-    await supabase.storage.from('uploads').remove([record.storedName])
-    await supabase.from('files').delete().eq('id', id)
-  }
+  if (!record) return
+
+  await deleteObject(record.storedName)
+  await prisma.fileShare.deleteMany({ where: { id } })
 }
 
-export async function updateFileAttempts(id: string, attempts: number, lockedAt: number | null) {
-  await supabase.from('files').update({
-    attempts,
-    locked_at: lockedAt
-  }).eq('id', id)
+export async function updateFileAttempts(
+  id: string,
+  attempts: number,
+  lockedAt: number | null,
+) {
+  await prisma.fileShare.update({
+    where: { id },
+    data: {
+      attempts,
+      lockedAt: lockedAt === null ? null : new Date(lockedAt),
+    },
+  })
 }
 
-export async function checkAndRemoveIfExpired(id: string, fileExpiryHours: number) {
+export async function checkAndRemoveIfExpired(id: string) {
   const record = await getFile(id)
   if (!record) return null
-  const now = Date.now()
-  if (now >= record.expiresAt) {
+  if (Date.now() >= record.expiresAt) {
     await removeFile(id)
     return null
   }
   return record
 }
 
-// Background cron job to delete expired files
 export async function deleteExpiredFiles() {
-  const now = Date.now()
-  const { data } = await supabase.from('files').select('id, stored_name').lte('expires_at', now)
-  if (data && data.length > 0) {
-    const paths = data.map(r => r.stored_name)
-    await supabase.storage.from('uploads').remove(paths)
-    await supabase.from('files').delete().in('id', data.map(r => r.id))
+  const now = new Date()
+  const expired = await prisma.fileShare.findMany({
+    where: { expiresAt: { lte: now } },
+    select: { id: true, storedName: true },
+  })
+
+  for (const file of expired) {
+    await deleteObject(file.storedName)
+  }
+
+  if (expired.length > 0) {
+    await prisma.fileShare.deleteMany({
+      where: { id: { in: expired.map((file) => file.id) } },
+    })
   }
 }

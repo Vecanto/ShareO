@@ -1,73 +1,57 @@
-import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import DashboardClient from './DashboardClient'
 import { decryptPasswordSync } from '@/lib/hash'
-import { supabase as adminSupabase } from '@/lib/supabase'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/authOptions'
+import { prisma } from '@/lib/prisma'
+import Link from 'next/link'
+import SignOutButton from '@/components/SignOutButton'
 
 export const metadata = {
   title: 'Dashboard',
 }
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-
-  // Verify auth
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
     redirect('/login')
   }
 
-  // Fetch user files from the database using admin client to bypass RLS
-  const { data: files, error } = await adminSupabase
-    .from('files')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
+  const files = await prisma.fileShare.findMany({
+    where: { userId: session.user.id },
+    orderBy: { createdAt: 'desc' },
+  })
 
-  if (error) {
-    console.error('Error fetching dashboard files:', error)
-  }
-
-  // Map to a cleaner format and decrypt the password for display
-  const formattedFiles = (files || []).map((f) => {
-    const isExpired = Date.now() >= f.expires_at
-    const rawPassword = f.password ? decryptPasswordSync(f.password) : null
-
+  const formattedFiles = files.map((file) => {
     return {
-      id: f.id,
-      originalName: f.original_name,
-      createdAt: f.created_at,
-      expiresAt: f.expires_at,
-      isExpired,
-      password: rawPassword,
+      id: file.id,
+      originalName: file.originalName,
+      createdAt: file.createdAt.toISOString(),
+      expiresAt: file.expiresAt.getTime(),
+      isExpired: Date.now() >= file.expiresAt.getTime(),
+      password: file.password ? decryptPasswordSync(file.password) : null,
     }
   })
 
   return (
-    <div className="ab">
-      <main className="ab-content" style={{ maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
-        <div className="ab-hero" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+    <main className="dashboard-page">
+        <header className="dashboard-header">
           <div>
             <h1>Your Files</h1>
-            <p>Manage your uploads, view remaining validity, and retrieve passwords.</p>
+            <p>Manage your uploads, expiry dates, and share links.</p>
           </div>
-          <div>
-            <form action="/auth/signout" method="post">
-              <button className="cn-submit-btn" style={{ padding: '8px 16px', background: 'var(--border-2)', color: 'var(--text)' }}>
-                Sign Out
-              </button>
-            </form>
-          </div>
-        </div>
+          <SignOutButton />
+        </header>
 
         {formattedFiles.length === 0 ? (
-          <div className="ab-tagline">
-            You haven't uploaded any files while logged in yet.
+          <div className="dashboard-empty">
+            <h2>Your register is empty.</h2>
+            <p>Files you upload while signed in will appear here.</p>
+            <Link href="/#transfer" className="primary-cta">Create a handoff</Link>
           </div>
         ) : (
           <DashboardClient files={formattedFiles} />
         )}
-      </main>
-    </div>
+    </main>
   )
 }

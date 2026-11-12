@@ -1,11 +1,12 @@
 # Dependencies
 node_modules/
+/generated/prisma/
 
 # Next.js build output
 .next/
 out/
 
-# Local uploads & database (Supabase handles storage now)
+# Local runtime data; uploaded objects use configured S3-compatible storage
 server/uploads/*
 !server/uploads/.gitkeep
 server/data/
@@ -15,7 +16,6 @@ server/data/
 .env.local
 .env.production
 .env.development
-.env.example
 
 # Debug & test scripts
 test-supabase.js

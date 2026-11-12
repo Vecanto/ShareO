@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String      @id @default(uuid())
+  email        String      @unique
+  passwordHash String      @map("password_hash")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  files        FileShare[]
+
+  @@map("shareo_users")
+}
+
+model FileShare {
+  id           String    @id
+  userId       String?   @map("user_id")
+  originalName String    @map("original_name")
+  storedName   String    @unique @map("stored_name")
+  password     String?
+  attempts     Int       @default(0)
+  lockedAt     DateTime? @map("locked_at")
+  expiresAt    DateTime  @map("expires_at")
+  sizeBytes    Int       @map("size_bytes")
+  contentType  String    @map("content_type")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  user         User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([expiresAt])
+  @@map("shareo_files")
+}

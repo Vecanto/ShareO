@@ -143,7 +143,7 @@ export default function DownloadPage({ id }: { id: string }) {
       <div className="download-page">
         <div className="download-card" style={{ textAlign: 'center' }}>
           <div className="spinner" />
-          <p style={{ color: 'var(--text-3)', fontSize: '0.875rem' }}>Loading…</p>
+          <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>Loading…</p>
         </div>
       </div>
     )
@@ -163,7 +163,7 @@ export default function DownloadPage({ id }: { id: string }) {
       <div className="download-card">
         <h2>Download File</h2>
         <div className="file-info">
-          <p className="name">📄 {meta.originalName}</p>
+          <p className="name">{meta.originalName}</p>
           <p className="size">
             {meta.size !== 'Unknown size' ? `${meta.size} · ` : ''}
             Expires {formatExpiry(meta.expiresAt)}
@@ -174,7 +174,7 @@ export default function DownloadPage({ id }: { id: string }) {
           <div className="lockout-message">
             <h3>File Locked</h3>
             <p>Too many failed password attempts.</p>
-            {countdown && <p style={{ marginTop: '0.625rem', fontWeight: 500, color: 'var(--text-2)' }}>Unlocks in {countdown}</p>}
+            {countdown && <p style={{ marginTop: '0.625rem', fontWeight: 500, color: 'var(--forest-soft)' }}>Unlocks in {countdown}</p>}
           </div>
         ) : meta.passwordProtected ? (
           <>
@@ -194,7 +194,7 @@ export default function DownloadPage({ id }: { id: string }) {
             </form>
             {downloading && (
               <div className="progress-bar" style={{ marginTop: '0.75rem' }}>
-                <div className="progress-fill" style={{ width: `${downloadProgress}%` }} />
+                <div className="progress-fill" style={{ transform: `scaleX(${downloadProgress / 100})` }} />
               </div>
             )}
             <p className={`attempts-text ${attemptsLeft <= 1 ? 'warning' : ''}`}>
@@ -213,7 +213,7 @@ export default function DownloadPage({ id }: { id: string }) {
             </button>
             {downloading && (
               <div className="progress-bar" style={{ marginTop: '0.75rem' }}>
-                <div className="progress-fill" style={{ width: `${downloadProgress}%` }} />
+                <div className="progress-fill" style={{ transform: `scaleX(${downloadProgress / 100})` }} />
               </div>
             )}
             {verifyError && <p className="error-text" role="alert" style={{ textAlign: 'center', marginTop: '0.75rem' }}>{verifyError}</p>}
