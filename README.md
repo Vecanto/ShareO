@@ -167,17 +167,7 @@ stateDiagram-v2
 
 Do not use ShareO as the only copy of an important file. Keep your own copy until the recipient confirms they have downloaded it.
 
-## Troubleshooting
 
-### The link starts with `localhost:3000`
-
-`localhost` points to the computer running the development version of the website; it is not the public ShareO address. For the live site, a new link should start with:
-
-```text
-https://share-otrans.vercel.app/
-```
-
-If a new upload still generates a localhost link, contact the site administrator. The deployed site's public base URL needs to be configured and the site redeployed. Links already created with `localhost` should be re-created after the configuration is fixed.
 
 ### The upload does not start or fails
 
